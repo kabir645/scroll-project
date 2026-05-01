@@ -1,105 +1,157 @@
 "use client";
 
-import React, { useRef } from "react";
-import { useScroll, useTransform, motion, MotionValue } from "framer-motion";
+import React, { useEffect, useRef } from "react";
+import {
+  motion,
+  MotionValue,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 
-export const ContainerScroll = ({
-  titleComponent,
-  children,
-}: {
-  titleComponent: string | React.ReactNode;
-  children: React.ReactNode;
-}) => {
+export const ContainerScroll = ({ children }: { children: React.ReactNode }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const progress = useMotionValue(0);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
+  const smoothProgress = useSpring(progress, {
+    stiffness: 95,
+    damping: 24,
+    mass: 0.4,
   });
 
-  const [isMobile, setIsMobile] = React.useState(false);
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
 
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const rect = el.getBoundingClientRect();
+      const isHeroActive = rect.top <= 0 && rect.bottom >= window.innerHeight;
+
+      if (!isHeroActive) return;
+
+      const current = progress.get();
+      const scrollingDown = event.deltaY > 0;
+      const scrollingUp = event.deltaY < 0;
+
+      const isComplete = current >= 0.98;
+      const isAtStart = current <= 0.02;
+
+      const shouldLockScroll =
+        (scrollingDown && !isComplete) || (scrollingUp && !isAtStart);
+
+      if (!shouldLockScroll) return;
+
+      event.preventDefault();
+
+      const next = Math.min(1, Math.max(0, current + event.deltaY * 0.0012));
+
+      if (next >= 0.98) {
+        progress.set(1);
+        return;
+      }
+
+      if (next <= 0.02) {
+        progress.set(0);
+        return;
+      }
+
+      progress.set(next);
     };
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
+    window.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
-      window.removeEventListener("resize", checkMobile);
+      window.removeEventListener("wheel", handleWheel);
     };
-  }, []);
+  }, [progress]);
 
-  const scaleDimensions = () => {
-    return isMobile ? [0.7, 0.9] : [1.05, 1];
-  };
+  const rotateX = useTransform(smoothProgress, [0, 1], [18, 0]);
+  const scale = useTransform(smoothProgress, [0, 0.9, 1], [0.72, 1.025, 1]);
+  const y = useTransform(smoothProgress, [0, 1], [40, 0]);
+  const borderRadius = useTransform(smoothProgress, [0, 1], [42, 0]);
+  const padding = useTransform(smoothProgress, [0, 1], [14, 0]);
+  const frameWidth = useTransform(smoothProgress, [0, 1], ["82vw", "100vw"]);
+  const frameHeight = useTransform(smoothProgress, [0, 1], ["62vh", "100vh"]);
 
-  const rotate = useTransform(scrollYProgress, [0, 1], [20, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], scaleDimensions());
-  const translate = useTransform(scrollYProgress, [0, 1], [0, -100]);
-
-  return (
-    <div
-      className="h-[60rem] md:h-[80rem] flex items-center justify-center relative p-2 md:p-20"
-      ref={containerRef}
-    >
-      <div
-        className="py-10 md:py-40 w-full relative"
-        style={{
-          perspective: "1000px",
-        }}
-      >
-        <Header translate={translate} titleComponent={titleComponent} />
-
-        <Card rotate={rotate} translate={translate} scale={scale}>
-          {children}
-        </Card>
-      </div>
-    </div>
+  const glowOpacity = useTransform(
+    smoothProgress,
+    [0, 0.7, 1],
+    [0.35, 0.75, 0.15]
   );
-};
 
-export const Header = ({
-  translate,
-  titleComponent,
-}: {
-  translate: MotionValue<number>;
-  titleComponent: string | React.ReactNode;
-}) => {
   return (
-    <motion.div
-      style={{
-        translateY: translate,
-      }}
-      className="max-w-5xl mx-auto text-center"
-    >
-      {titleComponent}
-    </motion.div>
+    <section ref={containerRef} className="relative h-screen bg-black">
+      <div className="flex h-screen items-center justify-center overflow-hidden">
+        <div
+          className="relative flex h-full w-full items-center justify-center"
+          style={{ perspective: "1600px" }}
+        >
+          <Card
+            rotateX={rotateX}
+            scale={scale}
+            y={y}
+            borderRadius={borderRadius}
+            padding={padding}
+            frameWidth={frameWidth}
+            frameHeight={frameHeight}
+            glowOpacity={glowOpacity}
+          >
+            {children}
+          </Card>
+        </div>
+      </div>
+    </section>
   );
 };
 
 export const Card = ({
-  rotate,
+  rotateX,
   scale,
+  y,
+  borderRadius,
+  padding,
+  frameWidth,
+  frameHeight,
+  glowOpacity,
   children,
 }: {
-  rotate: MotionValue<number>;
+  rotateX: MotionValue<number>;
   scale: MotionValue<number>;
-  translate: MotionValue<number>;
+  y: MotionValue<number>;
+  borderRadius: MotionValue<number>;
+  padding: MotionValue<number>;
+  frameWidth: MotionValue<string>;
+  frameHeight: MotionValue<string>;
+  glowOpacity: MotionValue<number>;
   children: React.ReactNode;
 }) => {
   return (
     <motion.div
       style={{
-        rotateX: rotate,
+        rotateX,
         scale,
+        y,
+        width: frameWidth,
+        height: frameHeight,
+        borderRadius,
+        padding,
+        transformOrigin: "center center",
         boxShadow:
-          "0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003",
+          "0 50px 160px rgba(59,130,246,0.24), 0 25px 100px rgba(168,85,247,0.18)",
       }}
-      className="max-w-5xl -mt-12 mx-auto h-[30rem] md:h-[40rem] w-full border-4 border-[#6C6C6C] p-2 md:p-6 bg-[#222222] rounded-[30px] shadow-2xl"
+      className="relative overflow-hidden border border-white/15 bg-white/[0.045] backdrop-blur-xl"
     >
-      <div className="h-full w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-zinc-900 md:rounded-2xl md:p-4">
+      <motion.div
+        style={{ opacity: glowOpacity }}
+        className="pointer-events-none absolute -inset-20 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.35),transparent_45%)] blur-3xl"
+      />
+
+      <motion.div
+        style={{ borderRadius }}
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_28%,rgba(59,130,246,0.12)_55%,transparent_78%)]"
+      />
+
+      <div className="relative h-full w-full overflow-hidden rounded-[inherit] border border-white/10 bg-black/70 shadow-[inset_0_0_50px_rgba(255,255,255,0.05)]">
         {children}
       </div>
     </motion.div>
