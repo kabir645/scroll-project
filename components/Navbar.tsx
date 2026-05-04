@@ -116,7 +116,7 @@ export function Navbar() {
 
   return (
     <header className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-black/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-8">
+      <div className="mx-auto flex h-30 max-w-7xl items-center justify-between px-8">
         <Link href="/" className="flex items-center">
           <motion.div
             className="relative"
@@ -140,8 +140,8 @@ export function Navbar() {
               src="/convertiqmedia.png"
               alt="ConvertIQ Media"
               width={180}
-              height={60}
-              className="relative z-10 h-35 w-auto object-contain"
+              height={40}
+              className="relative z-10 h-30 w-auto object-contain"
               priority
             />
           </motion.div>
@@ -184,7 +184,7 @@ export function Navbar() {
                           className="group rounded-2xl border border-white/5 bg-white/[0.035] p-4 transition hover:border-purple-400/40 hover:bg-white/[0.07]"
                         >
                           <div className="flex gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/30 to-purple-600/30 text-purple-200 ring-1 ring-white/10 transition group-hover:scale-105">
+                            <div className="flex h-15 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600/30 to-purple-600/30 text-purple-200 ring-1 ring-white/10 transition group-hover:scale-105">
                               <Icon size={18} />
                             </div>
 
@@ -219,7 +219,7 @@ export function Navbar() {
           <MagneticButton>
             <Link
               href="#website-demo"
-              className="block rounded-md bg-[#1600b8] px-6 py-3 text-sm font-bold text-white shadow-[0_0_28px_rgba(37,99,235,0.25)]"
+              className="block rounded-md bg-[#1600b8] px-8 py-5 text-sm font-bold text-white shadow-[0_0_28px_rgba(37,99,235,0.25)]"
             >
               Get A Free Demo
             </Link>
@@ -228,7 +228,7 @@ export function Navbar() {
           <MagneticButton>
             <Link
               href="#book-audit"
-              className="block rounded-md bg-[#8b45d9] px-6 py-3 text-sm font-bold text-white shadow-[0_0_28px_rgba(168,85,247,0.25)]"
+              className="block rounded-md bg-[#8b45d9] px-8 py-5 text-sm font-bold text-white shadow-[0_0_28px_rgba(168,85,247,0.25)]"
             >
               Free Google Ads Audit
             </Link>

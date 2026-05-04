@@ -26,48 +26,76 @@ export const ContainerScroll = ({ children }: ContainerScrollProps) => {
   });
 
   useEffect(() => {
+    // ── Wheel (desktop) ────────────────────────────────────────────────────
     const handleWheel = (event: WheelEvent) => {
       const el = containerRef.current;
       if (!el) return;
 
       const rect = el.getBoundingClientRect();
       const isHeroActive = rect.top <= 0 && rect.bottom >= window.innerHeight;
-
       if (!isHeroActive) return;
 
       const current = progress.get();
-      const scrollingDown = event.deltaY > 0;
-      const scrollingUp = event.deltaY < 0;
-
+      const goingDown = event.deltaY > 0;
+      const goingUp = event.deltaY < 0;
       const isComplete = current >= 0.98;
       const isAtStart = current <= 0.02;
 
-      const shouldLockScroll =
-        (scrollingDown && !isComplete) || (scrollingUp && !isAtStart);
-
-      if (!shouldLockScroll) return;
+      const shouldLock =
+        (goingDown && !isComplete) || (goingUp && !isAtStart);
+      if (!shouldLock) return;
 
       event.preventDefault();
 
       const next = Math.min(1, Math.max(0, current + event.deltaY * 0.0012));
+      progress.set(next >= 0.98 ? 1 : next <= 0.02 ? 0 : next);
+    };
 
-      if (next >= 0.98) {
-        progress.set(1);
-        return;
-      }
+    // ── Touch (mobile) ─────────────────────────────────────────────────────
+    let touchStartY = 0;
 
-      if (next <= 0.02) {
-        progress.set(0);
-        return;
-      }
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
 
-      progress.set(next);
+    const handleTouchMove = (e: TouchEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const isHeroActive = rect.top <= 0 && rect.bottom >= window.innerHeight;
+      if (!isHeroActive) return;
+
+      const deltaY = touchStartY - e.touches[0].clientY; // positive = scroll down
+      touchStartY = e.touches[0].clientY;
+
+      const current = progress.get();
+      const goingDown = deltaY > 0;
+      const goingUp = deltaY < 0;
+      const isComplete = current >= 0.98;
+      const isAtStart = current <= 0.02;
+
+      const shouldLock =
+        (goingDown && !isComplete) || (goingUp && !isAtStart);
+      if (!shouldLock) return;
+
+      e.preventDefault();
+
+      const next = Math.min(
+        1,
+        Math.max(0, current + deltaY * 0.0012 * 2.5)
+      );
+      progress.set(next >= 0.98 ? 1 : next <= 0.02 ? 0 : next);
     };
 
     window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
 
     return () => {
       window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
     };
   }, [progress]);
 
@@ -145,7 +173,7 @@ export const Card = ({
         boxShadow:
           "0 50px 160px rgba(59,130,246,0.24), 0 25px 100px rgba(168,85,247,0.18)",
       }}
-      className="relative overflow-hidden border border-white/15 bg-white/[0.045] backdrop-blur-xl"
+      className="relative overflow-hidden border border-white/20 bg-white/[0.045] backdrop-blur-xl"
     >
       <motion.div
         style={{ opacity: glowOpacity }}
